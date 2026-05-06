@@ -1,4 +1,4 @@
-// Admin panel functionality for vehicle management
+// Admin panel functionality for vehicle management with Supabase
 
 // DOM elements
 const vehicleForm = document.getElementById('vehicleForm');
@@ -8,10 +8,13 @@ const messageDiv = document.getElementById('message');
 const vehiclesContainer = document.getElementById('vehiclesContainer');
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Admin panel initialized');
     setupFileUpload();
-    loadVehiclesFromLocalStorage();
+    
+    // Initialize Supabase
+    await initSupabase();
+    
     loadVehicles();
 });
 
@@ -77,25 +80,37 @@ function validateAndPreviewFile(file) {
 vehicleForm.addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    const formData = {
-        id: Date.now().toString(),
-        vehicleType: document.getElementById('vehicleType').value,
-        year: parseInt(document.getElementById('year').value),
-        make: document.getElementById('make').value,
-        model: document.getElementById('model').value,
-        price: parseFloat(document.getElementById('price').value),
-        description: document.getElementById('description').value,
-        imageFile: imageInput.files[0],
-        createdAt: new Date().toISOString()
-    };
+    const vehicleType = document.getElementById('vehicleType').value;
+    const year = parseInt(document.getElementById('year').value);
+    const make = document.getElementById('make').value;
+    const model = document.getElementById('model').value;
+    const price = parseFloat(document.getElementById('price').value);
+    const phone = document.getElementById('phone').value;
+    const description = document.getElementById('description').value;
+    const imageFile = imageInput.files[0];
 
     try {
         showMessage('Uploading vehicle...', 'success');
 
-        const imageUrl = await getImageUrl(formData.imageFile);
-        const vehicleSaveData = { ...formData, imageUrl };
+        // Upload image
+        let imageUrl = null;
+        if (imageFile) {
+            imageUrl = await uploadImageToSupabase(imageFile);
+        }
 
-        await saveVehicleData(vehicleSaveData);
+        // Save vehicle data
+        const vehicleData = {
+            vehicleType,
+            year,
+            make,
+            model,
+            price,
+            phone,
+            description,
+            imageUrl
+        };
+
+        await saveVehicleToSupabase(vehicleData);
 
         showMessage('Vehicle added successfully!', 'success');
         vehicleForm.reset();
@@ -108,117 +123,27 @@ vehicleForm.addEventListener('submit', async function(event) {
     }
 });
 
-// Upload image to Firebase Storage
-async function uploadImage(file) {
-    const storageRef = storage.ref();
-    const imageRef = storageRef.child(`vehicles/${Date.now()}_${file.name}`);
-
-    const snapshot = await imageRef.put(file);
-    const downloadURL = await snapshot.ref.getDownloadURL();
-
-    return downloadURL;
-}
-
-async function getImageUrl(file) {
-    if (!file) {
-        return null;
-    }
-
-    if (typeof storage !== 'undefined' && storage) {
-        try {
-            return await uploadImage(file);
-        } catch (storageError) {
-            console.warn('Firebase storage upload failed, using local image URL instead.', storageError);
-            return await readFileAsDataURL(file);
-        }
-    }
-
-    return await readFileAsDataURL(file);
-}
-
-function readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-// Save vehicle data to Firestore or localStorage
-async function saveVehicleData(vehicleData) {
-    const { imageFile, ...dataToSave } = vehicleData;
-
-    if (typeof db !== 'undefined' && db) {
-        try {
-            await db.collection('vehicles').add(dataToSave);
-            return;
-        } catch (firestoreError) {
-            console.warn('Firestore save failed, using localStorage fallback:', firestoreError);
-        }
-    }
-
-    saveVehicleToLocalStorage(dataToSave);
-}
-
-function saveVehicleToLocalStorage(vehicleData) {
-    const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-    storedVehicles.push(vehicleData);
-    localStorage.setItem('vehicles', JSON.stringify(storedVehicles));
-}
-
-function loadVehiclesFromLocalStorage() {
-    const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-
-    if (!storedVehicles.length) {
-        vehiclesContainer.innerHTML = '<p>No vehicles found.</p>';
-        return;
-    }
-
-    const vehiclesHTML = storedVehicles.map(vehicle => {
-        return `
-            <div class="vehicle-item">
-                <h3>${vehicle.year} ${vehicle.make} ${vehicle.model}</h3>
-                <p><strong>Type:</strong> ${vehicle.vehicleType}</p>
-                <p><strong>Price:</strong> $${vehicle.price.toLocaleString()}</p>
-                <p><strong>Description:</strong> ${vehicle.description}</p>
-                ${vehicle.imageUrl ? `<img src="${vehicle.imageUrl}" alt="${vehicle.make} ${vehicle.model}" class="vehicle-image">` : ''}
-                <div class="actions">
-                    <button class="btn btn-secondary" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    vehiclesContainer.innerHTML = vehiclesHTML;
-}
-
 // Load and display vehicles
 async function loadVehicles() {
-    if (typeof db === 'undefined' || !db) {
-        loadVehiclesFromLocalStorage();
-        return;
-    }
-
     try {
-        const querySnapshot = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
+        const vehicles = await loadVehiclesFromSupabase();
 
-        if (querySnapshot.empty) {
-            loadVehiclesFromLocalStorage();
+        if (!vehicles || vehicles.length === 0) {
+            vehiclesContainer.innerHTML = '<p>No vehicles found.</p>';
             return;
         }
 
-        const vehiclesHTML = querySnapshot.docs.map(doc => {
-            const vehicle = doc.data();
+        const vehiclesHTML = vehicles.map(vehicle => {
             return `
                 <div class="vehicle-item">
                     <h3>${vehicle.year} ${vehicle.make} ${vehicle.model}</h3>
                     <p><strong>Type:</strong> ${vehicle.vehicleType}</p>
-                    <p><strong>Price:</strong> $${vehicle.price.toLocaleString()}</p>
+                    <p><strong>Price:</strong> $${Number(vehicle.price).toLocaleString()}</p>
+                    <p><strong>Phone:</strong> ${vehicle.phone}</p>
                     <p><strong>Description:</strong> ${vehicle.description}</p>
-                    ${vehicle.imageUrl ? `<img src="${vehicle.imageUrl}" alt="${vehicle.make} ${vehicle.model}" class="vehicle-image">` : ''}
+                    ${vehicle.image ? `<img src="${vehicle.image}" alt="${vehicle.make} ${vehicle.model}" class="vehicle-image">` : ''}
                     <div class="actions">
-                        <button class="btn btn-secondary" onclick="deleteVehicle('${doc.id}')">Delete</button>
+                        <button class="btn btn-secondary" onclick="deleteVehicle('${vehicle.id}')">Delete</button>
                     </div>
                 </div>
             `;
@@ -228,7 +153,7 @@ async function loadVehicles() {
 
     } catch (error) {
         console.error('Error loading vehicles:', error);
-        loadVehiclesFromLocalStorage();
+        vehiclesContainer.innerHTML = '<p>Error loading vehicles. Please try again.</p>';
     }
 }
 
@@ -236,17 +161,9 @@ async function loadVehicles() {
 async function deleteVehicle(vehicleId) {
     if (confirm('Are you sure you want to delete this vehicle?')) {
         try {
-            if (typeof db !== 'undefined' && db) {
-                await db.collection('vehicles').doc(vehicleId).delete();
-                showMessage('Vehicle deleted successfully!', 'success');
-                loadVehicles();
-            } else {
-                const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-                const remainingVehicles = storedVehicles.filter(v => v.id !== vehicleId);
-                localStorage.setItem('vehicles', JSON.stringify(remainingVehicles));
-                showMessage('Vehicle deleted successfully!', 'success');
-                loadVehiclesFromLocalStorage();
-            }
+            await deleteVehicleFromSupabase(vehicleId);
+            showMessage('Vehicle deleted successfully!', 'success');
+            loadVehicles();
         } catch (error) {
             console.error('Error deleting vehicle:', error);
             showMessage('Error deleting vehicle: ' + error.message, 'error');
@@ -254,18 +171,13 @@ async function deleteVehicle(vehicleId) {
     }
 }
 
-// Show message to user
-function showMessage(text, type) {
-    messageDiv.textContent = text;
-    messageDiv.className = `message ${type}`;
+// Show message notification
+function showMessage(message, type) {
+    messageDiv.textContent = message;
+    messageDiv.className = 'message ' + type;
     messageDiv.style.display = 'block';
 
-    // Auto hide after 5 seconds
     setTimeout(() => {
         messageDiv.style.display = 'none';
     }, 5000);
 }
-
-// Make functions globally available
-window.loadVehicles = loadVehicles;
-window.deleteVehicle = deleteVehicle;

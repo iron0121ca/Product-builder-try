@@ -256,12 +256,9 @@
         <p>&copy; 2024 Car Browsing Website. All rights reserved.</p>
     </footer>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-    <script src="app.js"></script>
-
+    <!-- Supabase Scripts -->
+    <script src="supabase-config.js"></script>
+    <script src="supabase-utils.js"></script>
     <script>
         // Cloudflare R2 Storage Configuration
         const R2_BUCKET_URL = 'https://60a23fa27b31818c94f4e9bcefd56a9f.r2.cloudflarestorage.com/product-builder-vehicle';
@@ -408,6 +405,9 @@
         async function loadProductDetail() {
             const carId = getCarIdFromURL();
             
+            // Initialize Supabase
+            await initSupabase();
+            
             // Try to get car from sessionStorage first
             const storedCar = sessionStorage.getItem('selectedCar');
             if (storedCar) {
@@ -415,56 +415,14 @@
                 return;
             }
 
-            // If not in sessionStorage, try to load from Firebase
-            if (typeof db !== 'undefined' && db) {
-                try {
-                    const doc = await db.collection('vehicles').doc(carId).get();
-                    if (doc.exists) {
-                        const vehicle = doc.data();
-                        const car = {
-                            id: doc.id,
-                            name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-                            brand: vehicle.make,
-                            price: vehicle.price,
-                            year: vehicle.year,
-                            color: vehicle.color || 'Various',
-                            mileage: vehicle.vehicleType === 'car' ? 'New' : 'New Truck',
-                            image: vehicle.imageUrl,
-                            phone: vehicle.phone,
-                            description: vehicle.description,
-                            vehicleType: vehicle.vehicleType
-                        };
-                        renderProductDetail(car);
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error loading from Firebase:', error);
-                }
-            }
-
-            // Try to load from localStorage as fallback
-            try {
-                const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-                const vehicle = storedVehicles.find(v => v.id === carId);
+            // If not in sessionStorage, try to load from Supabase
+            const vehicles = await loadVehiclesFromSupabase();
+            if (vehicles && vehicles.length > 0) {
+                const vehicle = vehicles.find(v => v.id === carId);
                 if (vehicle) {
-                    const car = {
-                        id: vehicle.id,
-                        name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-                        brand: vehicle.make,
-                        price: vehicle.price,
-                        year: vehicle.year,
-                        color: vehicle.color || 'Various',
-                        mileage: vehicle.vehicleType === 'truck' ? 'New Truck' : 'New',
-                        image: vehicle.imageUrl || 'https://via.placeholder.com/800x500?text=Vehicle',
-                        description: vehicle.description,
-                        phone: vehicle.phone,
-                        vehicleType: vehicle.vehicleType
-                    };
-                    renderProductDetail(car);
+                    renderProductDetail(vehicle);
                     return;
                 }
-            } catch (error) {
-                console.error('Error loading from localStorage:', error);
             }
 
             document.getElementById('detail-content').innerHTML = '<div class="error">Product not found. Please go back and try again.</div>';
@@ -472,8 +430,7 @@
 
         // Load product detail when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Give Firebase time to initialize
-            setTimeout(loadProductDetail, 1000);
+            loadProductDetail();
         });
     </script>
 </body>

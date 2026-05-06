@@ -183,7 +183,7 @@
         </div>
 
         <div class="cars-grid" id="cars-grid">
-            <!-- 汽车卡片将在这里动态插入 -->
+            <!-- Car cards will be inserted here -->
         </div>
     </div>
 
@@ -191,93 +191,33 @@
         <p>&copy; 2024 Car Browsing Website. All rights reserved.</p>
     </footer>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-    <script src="app.js"></script>
+    <!-- Supabase Scripts -->
+    <script src="supabase-config.js"></script>
+    <script src="supabase-utils.js"></script>
     <script>
         // Cloudflare R2 Storage Configuration
         const R2_BUCKET_URL = 'https://60a23fa27b31818c94f4e9bcefd56a9f.r2.cloudflarestorage.com/product-builder-vehicle';
 
-        // Car data - will be loaded from Firestore
+        // Car data - will be loaded from Supabase
         let cars = [];
 
-        // Load cars from Firestore
+        // Load cars from Supabase
         async function loadCarsFromDatabase() {
-            if (typeof db === 'undefined' || !db) {
-                loadCarsFromLocalStorage();
+            // Initialize Supabase
+            await initSupabase();
+            
+            const vehicles = await loadVehiclesFromSupabase();
+            
+            if (!vehicles || vehicles.length === 0) {
+                renderCars([]);
+                updateBrandFilterOptions();
                 return;
             }
 
-            try {
-                const querySnapshot = await db.collection('vehicles').orderBy('createdAt', 'desc').get();
-                cars = [];
-
-                querySnapshot.forEach((doc) => {
-                    const vehicle = doc.data();
-                    // Convert to the format expected by the display function
-                    cars.push({
-                        id: doc.id,
-                        name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-                        brand: vehicle.make,
-                        price: vehicle.price,
-                        year: vehicle.year,
-                        color: 'Various', // Could be added to form later
-                        mileage: vehicle.vehicleType === 'car' ? 'New' : 'New Truck', // Could be added to form later
-                        image: vehicle.imageUrl,
-                        phone: vehicle.phone,
-                        description: vehicle.description,
-                        vehicleType: vehicle.vehicleType
-                    });
-                });
-
-                if (cars.length === 0) {
-                    loadCarsFromLocalStorage();
-                    return;
-                }
-
-                renderCars(cars);
-                updateBrandFilterOptions();
-                console.log('Loaded', cars.length, 'vehicles from database');
-
-            } catch (error) {
-                console.error('Error loading cars from database:', error);
-                loadCarsFromLocalStorage();
-            }
-        }
-
-        function loadCarsFromLocalStorage() {
-            try {
-                const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-                if (!storedVehicles.length) {
-                    cars = [];
-                    updateBrandFilterOptions();
-                    renderCars(cars);
-                    return;
-                }
-
-                cars = storedVehicles.map(vehicle => ({
-                    id: vehicle.id || Date.now().toString(),
-                    name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-                    brand: vehicle.make,
-                    price: vehicle.price,
-                    year: vehicle.year,
-                    color: vehicle.color || 'Various',
-                    mileage: vehicle.vehicleType === 'truck' ? 'New Truck' : 'New',
-                    image: vehicle.imageUrl || 'https://via.placeholder.com/400x220?text=Vehicle',
-                    description: vehicle.description,
-                    vehicleType: vehicle.vehicleType
-                }));
-
-                updateBrandFilterOptions();
-                renderCars(cars);
-            } catch (innerError) {
-                console.error('Error loading cars from local storage:', innerError);
-                cars = [];
-                updateBrandFilterOptions();
-                renderCars(cars);
-            }
+            cars = vehicles;
+            renderCars(cars);
+            updateBrandFilterOptions();
+            console.log('Loaded', cars.length, 'vehicles from Supabase');
         }
 
         function updateBrandFilterOptions() {
@@ -297,7 +237,7 @@
             });
         }
 
-        // 获取过滤条件
+        // Get price range
         function getPriceRange(price) {
             if (price < 30000) return '0-20';
             if (price < 75000) return '20-50';
@@ -343,7 +283,6 @@
                 window.location.href = 'product-detail.html?id=' + carId;
             }
         }
-        }
 
         // Filter cars
         function filterCars() {
@@ -363,7 +302,7 @@
             renderCars(filtered);
         }
 
-        // 初始化
+        // Initialize
         document.getElementById('brand-filter').addEventListener('change', filterCars);
         document.getElementById('price-filter').addEventListener('change', filterCars);
 
