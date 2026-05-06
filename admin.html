@@ -196,6 +196,11 @@
             </div>
 
             <div class="form-group">
+                <label for="phone">Contact Phone:</label>
+                <input type="tel" id="phone" placeholder="e.g., 123-456-7890" required>
+            </div>
+
+            <div class="form-group">
                 <label for="description">Description:</label>
                 <textarea id="description" placeholder="Enter vehicle description" required></textarea>
             </div>
@@ -203,8 +208,11 @@
             <div class="form-group">
                 <label for="image">Vehicle Image:</label>
                 <input type="file" id="image" accept="image/*" required style="display: none;">
-                <div class="file-input" id="fileDropZone">
+                <div class="file-input" id="fileDropZone" onclick="document.getElementById('image').click()">
                     <p>Drag & drop an image here, or click to select</p>
+                </div>
+                <div id="imagePreview" style="margin-top: 10px; display: none;">
+                    <img id="previewImg" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid #ddd;">
                 </div>
             </div>
 

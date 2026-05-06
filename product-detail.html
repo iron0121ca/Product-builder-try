@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        header h1 {
+            font-size: 2em;
+            flex: 1;
+        }
+
+        .back-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .detail-section {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .product-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .price-tag {
+            font-size: 2.5em;
+            color: #e74c3c;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Image Gallery Styles */
+        .gallery-container {
+            margin-bottom: 40px;
+        }
+
+        .gallery-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 500px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .thumbnail {
+            width: 100%;
+            height: 120px;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            border-color: #667eea;
+        }
+
+        /* Product Details Styles */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .detail-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .detail-value {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .description-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .description-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .description-text {
+            line-height: 1.8;
+            font-size: 1em;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-contact {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-contact:hover {
+            background: #764ba2;
+        }
+
+        .btn-phone {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-phone:hover {
+            background: #229954;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #999;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🚗 Product Detail</h1>
+        <button class="back-btn" onclick="goBack()">← Back</button>
+    </header>
+
+    <div class="container">
+        <div id="detail-content" class="loading">Loading product details...</div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Car Browsing Website. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // Cloudflare R2 Storage Configuration
+        const R2_BUCKET_URL = 'https://60a23fa27b31818c94f4e9bcefd56a9f.r2.cloudflarestorage.com/product-builder-vehicle';
+
+        let currentCar = null;
+
+        // Get car ID from URL parameters
+        function getCarIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Go back to home page
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // Generate placeholder images for gallery
+        function generateGalleryImages(carName) {
+            const images = [];
+            for (let i = 1; i <= 10; i++) {
+                images.push({
+                    url: `https://via.placeholder.com/800x500/667eea/ffffff?text=${encodeURIComponent(carName)}+Image+${i}`,
+                    alt: `${carName} - View ${i}`
+                });
+            }
+            return images;
+        }
+
+        // Render product detail page
+        function renderProductDetail(car) {
+            if (!car) {
+                document.getElementById('detail-content').innerHTML = '<div class="error">Product not found.</div>';
+                return;
+            }
+
+            currentCar = car;
+            const galleryImages = generateGalleryImages(car.name);
+            const mainImage = car.image || galleryImages[0].url;
+
+            let detailHTML = `
+                <div class="detail-section">
+                    <h2 class="product-title">${car.name}</h2>
+                    <div class="price-tag">$${Number(car.price).toLocaleString()}</div>
+
+                    <!-- Gallery Section -->
+                    <div class="gallery-container">
+                        <h3 class="gallery-title">📷 Image Gallery</h3>
+                        
+                        <div class="main-image">
+                            <img id="main-image" src="${mainImage}" alt="${car.name}" onerror="this.src='https://via.placeholder.com/800x500/e0e0e0/999999?text=${encodeURIComponent(car.name)}'">
+                        </div>
+
+                        <div class="thumbnail-gallery" id="thumbnail-gallery">
+            `;
+
+            galleryImages.forEach((img, index) => {
+                detailHTML += `
+                    <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.url}', this)">
+                        <img src="${img.url}" alt="${img.alt}" onerror="this.src='https://via.placeholder.com/150x120/e0e0e0/999999?text=Image+${index + 1}'">
+                    </div>
+                `;
+            });
+
+            detailHTML += `
+                        </div>
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Brand</div>
+                            <div class="detail-value">${car.brand || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Year</div>
+                            <div class="detail-value">${car.year || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Color</div>
+                            <div class="detail-value">${car.color || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Mileage</div>
+                            <div class="detail-value">${car.mileage || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Vehicle Type</div>
+                            <div class="detail-value">${car.vehicleType || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">Available</div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="description-section">
+                        <h3 class="description-title">📝 Description</h3>
+                        <p class="description-text">${car.description || 'No description available for this vehicle. Please contact us for more information.'}</p>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="description-section">
+                        <h3 class="description-title">📞 Contact Information</h3>
+                        <p class="description-text"><strong>Phone:</strong> ${car.phone || 'Contact us for information'}</p>
+                        <div class="action-buttons">
+                            <button class="btn btn-contact" onclick="contactUs()">📧 Contact Us</button>
+                            <button class="btn btn-phone" onclick="callUs()">☎️ Call Now</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detail-content').innerHTML = detailHTML;
+        }
+
+        // Change main image when thumbnail is clicked
+        function changeMainImage(imageUrl, element) {
+            document.getElementById('main-image').src = imageUrl;
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        // Contact us function
+        function contactUs() {
+            alert(`Thank you for your interest in ${currentCar.name}!\n\nPlease contact us at:\n${currentCar.phone || 'Phone not available'}\n\nWe'll be happy to answer any questions!`);
+        }
+
+        // Call now function
+        function callUs() {
+            if (currentCar.phone) {
+                window.location.href = `tel:${currentCar.phone}`;
+            } else {
+                alert('Phone number not available for this vehicle.');
+            }
+        }
+
+        // Load product details when page loads
+        async function loadProductDetail() {
+            const carId = getCarIdFromURL();
+            
+            // Try to get car from sessionStorage first
+            const storedCar = sessionStorage.getItem('selectedCar');
+            if (storedCar) {
+                renderProductDetail(JSON.parse(storedCar));
+                return;
+            }
+
+            // If not in sessionStorage, try to load from Firebase
+            if (typeof db !== 'undefined' && db) {
+                try {
+                    const doc = await db.collection('vehicles').doc(carId).get();
+                    if (doc.exists) {
+                        const vehicle = doc.data();
+                        const car = {
+                            id: doc.id,
+                            name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                            brand: vehicle.make,
+                            price: vehicle.price,
+                            year: vehicle.year,
+                            color: vehicle.color || 'Various',
+                            mileage: vehicle.vehicleType === 'car' ? 'New' : 'New Truck',
+                            image: vehicle.imageUrl,
+                            phone: vehicle.phone,
+                            description: vehicle.description,
+                            vehicleType: vehicle.vehicleType
+                        };
+                        renderProductDetail(car);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error loading from Firebase:', error);
+                }
+            }
+
+            // Try to load from localStorage as fallback
+            try {
+                const storedVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+                const vehicle = storedVehicles.find(v => v.id === carId);
+                if (vehicle) {
+                    const car = {
+                        id: vehicle.id,
+                        name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                        brand: vehicle.make,
+                        price: vehicle.price,
+                        year: vehicle.year,
+                        color: vehicle.color || 'Various',
+                        mileage: vehicle.vehicleType === 'truck' ? 'New Truck' : 'New',
+                        image: vehicle.imageUrl || 'https://via.placeholder.com/800x500?text=Vehicle',
+                        description: vehicle.description,
+                        phone: vehicle.phone,
+                        vehicleType: vehicle.vehicleType
+                    };
+                    renderProductDetail(car);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+
+            document.getElementById('detail-content').innerHTML = '<div class="error">Product not found. Please go back and try again.</div>';
+        }
+
+        // Load product detail when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give Firebase time to initialize
+            setTimeout(loadProductDetail, 1000);
+        });
+    </script>
+</body>
+</html>

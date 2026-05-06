@@ -191,6 +191,11 @@
         <p>&copy; 2024 Car Browsing Website. All rights reserved.</p>
     </footer>
 
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="app.js"></script>
     <script>
         // Cloudflare R2 Storage Configuration
         const R2_BUCKET_URL = 'https://60a23fa27b31818c94f4e9bcefd56a9f.r2.cloudflarestorage.com/product-builder-vehicle';
@@ -322,11 +327,22 @@
                             <p><strong>Color:</strong> ${car.color}</p>
                             <p><strong>Mileage:</strong> ${car.mileage}</p>
                         </div>
-                        <div class="price">$${car.price}K</div>
-                        <button class="btn" onclick="alert('Thank you for your interest!\\nModel: ${car.name}\\nPrice: $${car.price}K\\nPlease contact us for more information.')">Learn More</button>
+                        <div class="price">$${Number(car.price).toLocaleString()}</div>
+                        <button class="btn" onclick="goToDetail('${car.id}')">Learn More</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // Navigate to product detail page
+        function goToDetail(carId) {
+            const car = cars.find(c => c.id === carId);
+            if (car) {
+                // Store car data in sessionStorage for the detail page
+                sessionStorage.setItem('selectedCar', JSON.stringify(car));
+                window.location.href = 'product-detail.html?id=' + carId;
+            }
+        }
         }
 
         // Filter cars
@@ -354,11 +370,5 @@
         // Load cars when the page opens
         loadCarsFromDatabase();
     </script>
-
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-    <script src="app.js"></script>
 </body>
 </html>
