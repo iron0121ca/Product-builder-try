@@ -85,7 +85,6 @@ vehicleForm.addEventListener('submit', async function(event) {
     const make = document.getElementById('make').value;
     const model = document.getElementById('model').value;
     const price = parseFloat(document.getElementById('price').value);
-    const phone = document.getElementById('phone').value;
     const description = document.getElementById('description').value;
     const imageFile = imageInput.files[0];
 
@@ -105,7 +104,6 @@ vehicleForm.addEventListener('submit', async function(event) {
             make,
             model,
             price,
-            phone,
             description,
             imageUrl
         };
@@ -139,7 +137,6 @@ async function loadVehicles() {
                     <h3>${vehicle.year} ${vehicle.make} ${vehicle.model}</h3>
                     <p><strong>Type:</strong> ${vehicle.vehicleType}</p>
                     <p><strong>Price:</strong> $${Number(vehicle.price).toLocaleString()}</p>
-                    <p><strong>Phone:</strong> ${vehicle.phone}</p>
                     <p><strong>Description:</strong> ${vehicle.description}</p>
                     ${vehicle.image ? `<img src="${vehicle.image}" alt="${vehicle.make} ${vehicle.model}" class="vehicle-image">` : ''}
                     <div class="actions">

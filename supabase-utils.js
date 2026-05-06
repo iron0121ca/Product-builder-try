@@ -21,7 +21,6 @@ async function saveVehicleToSupabase(vehicleData) {
                 make: vehicleData.make,
                 model: vehicleData.model,
                 price: vehicleData.price,
-                phone: vehicleData.phone,
                 description: vehicleData.description,
                 image_url: vehicleData.imageUrl,
                 created_at: new Date().toISOString()
