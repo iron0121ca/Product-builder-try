@@ -1,6 +1,6 @@
 // Firebase configuration and initialization
 const firebaseConfig = {
-  apiKey: "AIzaSyC_example_key_here",
+  apiKey: "YOUR_REAL_API_KEY_HERE",  // 请替换为真实的 Firebase API 密钥
   authDomain: "iron-auto-market.firebaseapp.com",
   projectId: "iron-auto-market",
   storageBucket: "iron-auto-market.firebasestorage.app",
